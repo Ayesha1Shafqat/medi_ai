@@ -2,116 +2,151 @@ package com.example.medi_ai;
 
 import android.app.TimePickerDialog;
 import android.os.Bundle;
-import android.view.MenuItem;
-import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Spinner;
 import android.widget.Switch;
-import android.widget.TimePicker;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 
-import java.util.Calendar;
+import com.google.android.material.textfield.MaterialAutoCompleteTextView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 
 public class AddTaskActivity extends AppCompatActivity {
 
-    private Toolbar toolbar;
-    private EditText taskNameInput, taskDescInput, dueTimeInput;
-    private Spinner prioritySpinner;
-    private Switch reminderSwitch;
-    private Button saveTaskBtn;
+    MaterialAutoCompleteTextView priorityDropdown;
+    android.widget.EditText taskNameInput, taskDescInput, dueTimeInput;
+    Switch reminderSwitch;
+    Button saveTaskBtn, aiSuggestBtn;
+
+    FirebaseAuth auth;
+    DatabaseReference database;
+
+    String selectedTime = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_task);
 
-        // ================== Toolbar ==================
-        toolbar = findViewById(R.id.add_task_toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true); // Enable back arrow
-            getSupportActionBar().setTitle("Add Task");
-        }
+        // 🔥 Firebase
+        auth = FirebaseAuth.getInstance();
+        database = FirebaseDatabase.getInstance().getReference();
 
-        // ================== Initialize Views ==================
+        // 🧩 Bind UI
         taskNameInput = findViewById(R.id.task_name_input);
         taskDescInput = findViewById(R.id.task_desc_input);
         dueTimeInput = findViewById(R.id.due_time_input);
-        prioritySpinner = findViewById(R.id.priority_spinner);
         reminderSwitch = findViewById(R.id.reminder_switch);
         saveTaskBtn = findViewById(R.id.save_task_btn);
+        aiSuggestBtn = findViewById(R.id.aiSuggestBtn);
 
-        // ================== Spinner Setup ==================
+        // ⚡ IMPORTANT FIX (Dropdown)
+        priorityDropdown = findViewById(R.id.priority_dropdown);
+
         String[] priorities = {"Low", "Medium", "High"};
-        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, priorities);
-        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        prioritySpinner.setAdapter(spinnerAdapter);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_dropdown_item_1line,
+                priorities
+        );
+        priorityDropdown.setAdapter(adapter);
 
-        // ================== Time Picker ==================
-        dueTimeInput.setOnClickListener(v -> showTimePicker());
+        // ⏰ TIME PICKER
+        dueTimeInput.setOnClickListener(v -> {
+            TimePickerDialog dialog = new TimePickerDialog(
+                    this,
+                    (view, hourOfDay, minute) -> {
+                        selectedTime = String.format(Locale.getDefault(),
+                                "%02d:%02d", hourOfDay, minute);
+                        dueTimeInput.setText(selectedTime);
+                    },
+                    12, 0, false
+            );
+            dialog.show();
+        });
 
-        // ================== Save Button ==================
-        saveTaskBtn.setOnClickListener(v -> saveTask());
+        // 🤖 AI BUTTON
+        aiSuggestBtn.setOnClickListener(v -> generateAITask());
+
+        // 💾 SAVE BUTTON
+        saveTaskBtn.setOnClickListener(v -> saveTaskToFirebase());
     }
 
-    // ================== Handle Toolbar Back Button ==================
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            finish(); // Close activity
-            return true;
+    // 🤖 AI LOGIC (RULE BASED)
+    private void generateAITask() {
+
+        String input = taskNameInput.getText().toString().toLowerCase();
+
+        if (input.contains("fever")) {
+            taskNameInput.setText("Take Paracetamol & Rest");
+            taskDescInput.setText("Stay hydrated and monitor temperature");
         }
-        return super.onOptionsItemSelected(item);
+        else if (input.contains("headache")) {
+            taskNameInput.setText("Rest in dark room");
+            taskDescInput.setText("Avoid screen exposure");
+        }
+        else if (input.contains("cough")) {
+            taskNameInput.setText("Drink warm fluids");
+            taskDescInput.setText("Use honey & warm water");
+        }
+        else {
+            taskNameInput.setText("Health monitoring task");
+            taskDescInput.setText("General care suggestion");
+        }
+
+        Toast.makeText(this, "AI Task Generated ✨", Toast.LENGTH_SHORT).show();
     }
 
-    // ================== Show Time Picker ==================
-    private void showTimePicker() {
-        Calendar calendar = Calendar.getInstance();
-        int hour = calendar.get(Calendar.HOUR_OF_DAY);
-        int minute = calendar.get(Calendar.MINUTE);
+    // 💾 SAVE FIREBASE
+    private void saveTaskToFirebase() {
 
-        TimePickerDialog timePickerDialog = new TimePickerDialog(this,
-                (TimePicker view, int selectedHour, int selectedMinute) -> {
-                    String amPm = (selectedHour >= 12) ? "PM" : "AM";
-                    int hour12 = selectedHour % 12;
-                    if (hour12 == 0) hour12 = 12;
-                    String formattedTime = String.format("%02d:%02d %s", hour12, selectedMinute, amPm);
-                    dueTimeInput.setText(formattedTime);
-                }, hour, minute, false);
+        String name = taskNameInput.getText().toString().trim();
+        String desc = taskDescInput.getText().toString().trim();
+        String priority = priorityDropdown.getText().toString();
+        boolean reminder = reminderSwitch.isChecked();
 
-        timePickerDialog.show();
-    }
-
-    // ================== Save Task Method ==================
-    private void saveTask() {
-        String taskName = taskNameInput.getText().toString().trim();
-        String taskDesc = taskDescInput.getText().toString().trim();
-        String dueTime = dueTimeInput.getText().toString().trim();
-        String priority = prioritySpinner.getSelectedItem().toString();
-        boolean reminderEnabled = reminderSwitch.isChecked();
-
-        if (taskName.isEmpty()) {
-            taskNameInput.setError("Task name is required");
-            taskNameInput.requestFocus();
+        if (name.isEmpty()) {
+            Toast.makeText(this, "Task name required", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // TODO: Save task to database, shared preferences, or your preferred storage
+        String userId = (auth.getCurrentUser() != null)
+                ? auth.getCurrentUser().getUid()
+                : "guest";
 
-        // For now, show a Toast
-        Toast.makeText(this, "Task Saved:\n" +
-                "Name: " + taskName + "\n" +
-                "Desc: " + taskDesc + "\n" +
-                "Time: " + dueTime + "\n" +
-                "Priority: " + priority + "\n" +
-                "Reminder: " + (reminderEnabled ? "Yes" : "No"), Toast.LENGTH_LONG).show();
+        String taskId = database.child("users")
+                .child(userId)
+                .child("tasks")
+                .push()
+                .getKey();
 
-        finish(); // Close activity after saving
+        Map<String, Object> task = new HashMap<>();
+        task.put("name", name);
+        task.put("description", desc);
+        task.put("priority", priority);
+        task.put("time", selectedTime);
+        task.put("reminder", reminder);
+        task.put("aiGenerated", true);
+        task.put("timestamp", System.currentTimeMillis());
+
+        database.child("users")
+                .child(userId)
+                .child("tasks")
+                .child(taskId)
+                .setValue(task)
+                .addOnSuccessListener(unused -> {
+                    Toast.makeText(this, "Task Saved ✅", Toast.LENGTH_SHORT).show();
+                    finish();
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                );
     }
 }
