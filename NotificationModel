@@ -1,0 +1,35 @@
+package com.example.medi_ai;
+
+public class NotificationModel {
+
+    private String title;
+    private String message;
+
+    // ✅ Required empty constructor (Firebase needs this)
+    public NotificationModel() {
+    }
+
+    // ✅ Constructor for manual use
+    public NotificationModel(String title, String message) {
+        this.title = title;
+        this.message = message;
+    }
+
+    // 🔽 Getters (Firebase reads data using these)
+    public String getTitle() {
+        return title;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    // 🔼 Setters (Firebase updates / writes use these)
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+}
