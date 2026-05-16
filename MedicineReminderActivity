@@ -1,0 +1,101 @@
+package com.example.medi_ai;
+
+import android.app.TimePickerDialog;
+import android.os.Bundle;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+
+import java.util.Calendar;
+
+public class MedicineReminderActivity extends AppCompatActivity {
+
+    Button btnPickTime, btnSaveReminder;
+    EditText etMedicineName, etDosage;
+
+    String selectedTime = "Pick Time";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_medicine_reminder);
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+
+        // ✅ Views init
+        btnPickTime = findViewById(R.id.btnPickTime);
+        btnSaveReminder = findViewById(R.id.btnSaveReminder);
+        etMedicineName = findViewById(R.id.etMedicineName);
+        etDosage = findViewById(R.id.etDosage);
+
+        // ================= TIME PICKER =================
+        btnPickTime.setOnClickListener(v -> {
+
+            Calendar calendar = Calendar.getInstance();
+            int hour = calendar.get(Calendar.HOUR_OF_DAY);
+            int minute = calendar.get(Calendar.MINUTE);
+
+            TimePickerDialog timePickerDialog = new TimePickerDialog(
+                    MedicineReminderActivity.this,
+                    (view, hourOfDay, minute1) -> {
+
+                        selectedTime = hourOfDay + ":" + String.format("%02d", minute1);
+                        btnPickTime.setText(selectedTime);
+
+                    },
+                    hour,
+                    minute,
+                    true
+            );
+
+            timePickerDialog.show();
+        });
+
+        // ================= SAVE BUTTON =================
+        btnSaveReminder.setOnClickListener(v -> {
+
+            String name = etMedicineName.getText().toString().trim();
+            String dosage = etDosage.getText().toString().trim();
+
+            if (name.isEmpty()) {
+                Toast.makeText(this, "Enter medicine name", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (dosage.isEmpty()) {
+                Toast.makeText(this, "Enter dosage", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (selectedTime.equals("Pick Time")) {
+                Toast.makeText(this, "Select time first", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // ✅ Demo success
+            Toast.makeText(
+                    this,
+                    "Reminder Saved ✅\n" + name + " at " + selectedTime,
+                    Toast.LENGTH_SHORT
+            ).show();
+
+            // Optional: clear fields
+            etMedicineName.setText("");
+            etDosage.setText("");
+            btnPickTime.setText("Pick Time");
+            selectedTime = "Pick Time";
+        });
+    }
+}
