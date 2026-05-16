@@ -6,36 +6,29 @@ import android.os.Handler;
 import android.os.Looper;
 import android.widget.TextView;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+
+import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivity extends AppCompatActivity {
 
     private TextView typingText;
+
     private final String text = "MediAI";
     private int index = 0;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
 
+    FirebaseAuth auth;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // Enable Edge-to-Edge (modern Android behavior)
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
-        // Apply system bar insets safely
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
-
         typingText = findViewById(R.id.typingText);
+
+        auth = FirebaseAuth.getInstance();
 
         startTypingEffect();
     }
@@ -44,22 +37,38 @@ public class MainActivity extends AppCompatActivity {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
+
                 if (index < text.length()) {
                     typingText.setText(text.substring(0, index + 1));
                     index++;
-                    handler.postDelayed(this, 200); // typing speed
+                    handler.postDelayed(this, 150);
                 } else {
-                    openSignupScreen();
+                    checkUserAndNavigate();
                 }
             }
-        }, 600); // initial delay before typing starts
+        }, 500);
     }
 
-    private void openSignupScreen() {
-        handler.postDelayed(() -> {
-            Intent intent = new Intent(MainActivity.this, Signup.class);
-            startActivity(intent);
-            finish(); // prevent returning to splash
-        }, 800); // pause after full text appears
+    // 🔥 SAFE NAVIGATION (UPDATED)
+    private void checkUserAndNavigate() {
+
+        // ✅ safety check added (race-condition protection)
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+
+        if (auth.getCurrentUser() != null) {
+            startActivity(new Intent(MainActivity.this, HomeActivity.class));
+        } else {
+            startActivity(new Intent(MainActivity.this, FirstPageActivity.class));
+        }
+
+        finish();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        handler.removeCallbacksAndMessages(null);
     }
 }
