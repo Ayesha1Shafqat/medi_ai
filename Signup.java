@@ -2,141 +2,99 @@ package com.example.medi_ai;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.TextUtils;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
-public class Signup extends AppCompatActivity {
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
-    private EditText etName, etEmail, etPassword, etAge;
-    private RadioGroup genderGroup;
-    private Button btnSignup;
-    private TextView loginText;
+import java.util.HashMap;
+
+public class SignupActivity extends AppCompatActivity {
+
+    TextInputEditText nameInput, emailInput, phoneInput, passwordInput;
+    MaterialButton signupBtn, googleBtn;
+
+    FirebaseAuth auth;
+    DatabaseReference database;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_signup);
 
-        // Edge-to-edge padding for system bars
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
+        // ✅ MATCHED WITH XML IDS
+        nameInput = findViewById(R.id.name);
+        emailInput = findViewById(R.id.email);
+        phoneInput = findViewById(R.id.phone);
+        passwordInput = findViewById(R.id.password);
 
-        // Initialize views
-        etName = findViewById(R.id.etName);
-        etEmail = findViewById(R.id.etEmail);
-        etPassword = findViewById(R.id.etPassword);
-        etAge = findViewById(R.id.etAge);
-        genderGroup = findViewById(R.id.genderGroup);
-        btnSignup = findViewById(R.id.btnSignup);
-        loginText = findViewById(R.id.loginText);
+        signupBtn = findViewById(R.id.signupBtn);
+        googleBtn = findViewById(R.id.googleBtn);
 
-        // Signup button click
-        btnSignup.setOnClickListener(v -> validateAndSignup());
+        // 🔥 FIREBASE INIT
+        auth = FirebaseAuth.getInstance();
+        database = FirebaseDatabase.getInstance().getReference("users");
 
-        // Login TextView click
-        loginText.setOnClickListener(v -> {
-            Intent intent = new Intent(Signup.this, login.class);
-            startActivity(intent);
-        });
+        signupBtn.setOnClickListener(v -> registerUser());
+
+        googleBtn.setOnClickListener(v ->
+                Toast.makeText(this, "Google Sign-In pending", Toast.LENGTH_SHORT).show()
+        );
     }
 
-    private void validateAndSignup() {
-        String name = etName.getText().toString().trim();
-        String email = etEmail.getText().toString().trim();
-        String password = etPassword.getText().toString().trim();
-        String ageStr = etAge.getText().toString().trim();
+    private void registerUser() {
 
-        // Validate Name
-        if (TextUtils.isEmpty(name)) {
-            etName.setError("Name is required");
-            etName.requestFocus();
+        String name = nameInput.getText() != null ? nameInput.getText().toString().trim() : "";
+        String email = emailInput.getText() != null ? emailInput.getText().toString().trim() : "";
+        String phone = phoneInput.getText() != null ? phoneInput.getText().toString().trim() : "";
+        String password = passwordInput.getText() != null ? passwordInput.getText().toString().trim() : "";
+
+        if (name.isEmpty() || email.isEmpty() || password.isEmpty()) {
+            Toast.makeText(this, "Fill all required fields", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Validate Email
-        if (TextUtils.isEmpty(email)) {
-            etEmail.setError("Email is required");
-            etEmail.requestFocus();
-            return;
-        }
+        auth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
 
-        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            etEmail.setError("Enter a valid email");
-            etEmail.requestFocus();
-            return;
-        }
+                    if (task.isSuccessful()) {
 
-        // Validate Password
-        if (TextUtils.isEmpty(password)) {
-            etPassword.setError("Password is required");
-            etPassword.requestFocus();
-            return;
-        }
+                        String uid = auth.getCurrentUser().getUid();
 
-        if (password.length() < 6) {
-            etPassword.setError("Password must be at least 6 characters");
-            etPassword.requestFocus();
-            return;
-        }
+                        HashMap<String, Object> user = new HashMap<>();
+                        user.put("uid", uid);
+                        user.put("name", name);
+                        user.put("email", email);
+                        user.put("phone", phone);
 
-        // Validate Age
-        if (TextUtils.isEmpty(ageStr)) {
-            etAge.setError("Age is required");
-            etAge.requestFocus();
-            return;
-        }
+                        database.child(uid).setValue(user)
+                                .addOnSuccessListener(unused -> {
 
-        int age;
-        try {
-            age = Integer.parseInt(ageStr);
-            if (age < 5 || age > 100) {
-                etAge.setError("Enter a valid age");
-                etAge.requestFocus();
-                return;
-            }
-        } catch (NumberFormatException e) {
-            etAge.setError("Enter a valid number");
-            etAge.requestFocus();
-            return;
-        }
+                                    Toast.makeText(this, "Signup Success ✔", Toast.LENGTH_SHORT).show();
 
-        // Validate Gender
-        int selectedGenderId = genderGroup.getCheckedRadioButtonId();
-        if (selectedGenderId == -1) {
-            Toast.makeText(this, "Please select your gender", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        RadioButton selectedGender = findViewById(selectedGenderId);
-        String gender = selectedGender.getText().toString();
+                                    getSharedPreferences("MediAI", MODE_PRIVATE)
+                                            .edit()
+                                            .putString("name", name)
+                                            .apply();
 
-        // SUCCESS
-        Toast.makeText(this,
-                "Signup Successful!\nName: " + name +
-                        "\nEmail: " + email +
-                        "\nPassword: " + password +
-                        "\nAge: " + age +
-                        "\nGender: " + gender,
-                Toast.LENGTH_LONG).show();
+                                    startActivity(new Intent(this, HomeActivity.class));
+                                    finish();
 
-        // TODO: Save user data to backend or SharedPreferences
-        // Example: Navigate to HomeActivity after signup
-        // Intent intent = new Intent(Signup.this, HomeActivity.class);
-        // startActivity(intent);
-        // finish();
+                                })
+                                .addOnFailureListener(e ->
+                                        Toast.makeText(this, "DB Error: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                                );
+
+                    } else {
+                        Toast.makeText(this,
+                                "Auth Error: " + task.getException().getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 }
