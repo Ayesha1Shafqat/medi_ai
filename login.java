@@ -3,74 +3,151 @@ package com.example.medi_ai;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.util.Patterns;
+import android.view.View;
+import android.widget.*;
 
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
-public class login extends AppCompatActivity {
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.FirebaseAuth;
 
-    private EditText etEmail, etPassword;
-    private Button btnLogin;
-    private TextView signupText;
+public class LoginActivity extends AppCompatActivity {
+
+    private TextInputEditText emailEt, passwordEt;
+    private MaterialButton loginBtn, googleBtn;
+    private TextView signUpLink, forgotPassword;
+    private ProgressBar progressBar;
+    private ImageButton backBtn;
+
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_login);
 
-        // Edge-to-edge padding
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
+        // Firebase
+        mAuth = FirebaseAuth.getInstance();
 
-        // Initialize views
-        etEmail = findViewById(R.id.etEmail);
-        etPassword = findViewById(R.id.etPassword);
-        btnLogin = findViewById(R.id.btnLogin);
-        signupText = findViewById(R.id.signupText);
+        // Views
+        emailEt = findViewById(R.id.email);
+        passwordEt = findViewById(R.id.password);
+        loginBtn = findViewById(R.id.loginBtn);
+        googleBtn = findViewById(R.id.googleBtn);
+        signUpLink = findViewById(R.id.signUpLink);
+        forgotPassword = findViewById(R.id.forgotPassword);
+        progressBar = findViewById(R.id.progressBar);
+        backBtn = findViewById(R.id.backBtn);
 
-        // Login button click
-        btnLogin.setOnClickListener(v -> {
-            String email = etEmail.getText().toString().trim();
-            String password = etPassword.getText().toString().trim();
+        // Back
+        backBtn.setOnClickListener(v -> finish());
 
-            // Simple validation
-            if (TextUtils.isEmpty(email)) {
-                etEmail.setError("Enter your email");
-                return;
-            }
-            if (TextUtils.isEmpty(password)) {
-                etPassword.setError("Enter your password");
-                return;
-            }
+        // Login
+        loginBtn.setOnClickListener(v -> loginUser());
 
-            // Here you can check credentials from database or API
-            // For now, we will just open HomeActivity no matter what
-            Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show();
-            openHome();
-        });
+        // Google (placeholder)
+        googleBtn.setOnClickListener(v ->
+                Toast.makeText(this, "Google Sign-In coming soon", Toast.LENGTH_SHORT).show()
+        );
 
-        // Signup link click
-        signupText.setOnClickListener(v -> {
-            Intent intent = new Intent(login.this, Signup.class);
-            startActivity(intent);
-        });
+        // Signup
+        signUpLink.setOnClickListener(v ->
+                startActivity(new Intent(this, SignupActivity.class))
+        );
+
+        // Forgot password
+        forgotPassword.setOnClickListener(v -> resetPassword());
     }
 
-    // Open Home Activity
-    private void openHome() {
-        Intent intent = new Intent(login.this, HomeActivity.class);
-        startActivity(intent);
-        finish();
+    // LOGIN
+    private void loginUser() {
+
+        String email = emailEt.getText() != null ? emailEt.getText().toString().trim() : "";
+        String password = passwordEt.getText() != null ? passwordEt.getText().toString().trim() : "";
+
+        if (TextUtils.isEmpty(email)) {
+            emailEt.setError("Email required");
+            return;
+        }
+
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            emailEt.setError("Invalid email");
+            return;
+        }
+
+        if (TextUtils.isEmpty(password)) {
+            passwordEt.setError("Password required");
+            return;
+        }
+
+        if (password.length() < 6) {
+            passwordEt.setError("Min 6 characters");
+            return;
+        }
+
+        setLoading(true);
+
+        mAuth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
+
+                    setLoading(false);
+
+                    if (task.isSuccessful()) {
+
+                        Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show();
+
+                        Intent intent = new Intent(this, HomeActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(intent);
+                        finish();
+
+                    } else {
+                        Toast.makeText(this,
+                                task.getException() != null ?
+                                        task.getException().getMessage()
+                                        : "Login failed",
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+
+    // RESET PASSWORD
+    private void resetPassword() {
+
+        String email = emailEt.getText() != null ? emailEt.getText().toString().trim() : "";
+
+        if (TextUtils.isEmpty(email)) {
+            emailEt.setError("Enter email first");
+            return;
+        }
+
+        setLoading(true);
+
+        mAuth.sendPasswordResetEmail(email)
+                .addOnCompleteListener(task -> {
+
+                    setLoading(false);
+
+                    if (task.isSuccessful()) {
+                        Toast.makeText(this, "Reset email sent", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(this,
+                                "Failed to send reset email",
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
+    }
+
+    // LOADING
+    private void setLoading(boolean loading) {
+
+        progressBar.setVisibility(loading ? View.VISIBLE : View.GONE);
+
+        loginBtn.setEnabled(!loading);
+        googleBtn.setEnabled(!loading);
+        forgotPassword.setEnabled(!loading);
+        signUpLink.setEnabled(!loading);
     }
 }
