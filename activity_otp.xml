@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="#F5F7FB">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Verify OTP"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        android:textColor="#1E3A8A"
+        android:layout_marginTop="40dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="We sent a 6-digit code to your number"
+        android:textSize="14sp"
+        android:textColor="#6B7280"
+        android:layout_marginTop="6dp"/>
+
+    <EditText
+        android:id="@+id/otpInput"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:layout_marginTop="40dp"
+        android:hint="Enter OTP"
+        android:inputType="number"
+        android:maxLength="6"
+        android:gravity="center"
+        android:textSize="18sp"
+        android:background="@drawable/otp_box"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/verifyBtn"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:text="Verify"
+        android:textAllCaps="false"
+        android:textColor="#FFFFFF"
+        android:layout_marginTop="30dp"
+        app:cornerRadius="12dp"
+        app:backgroundTint="#1E3A8A"/>
+
+    <TextView
+        android:id="@+id/resendOtp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Resend OTP"
+        android:gravity="center"
+        android:textColor="#1E3A8A"
+        android:layout_marginTop="20dp"/>
+</LinearLayout>
