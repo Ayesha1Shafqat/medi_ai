@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F7FB"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <!-- TITLE -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🚨 Emergency SOS"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            android:textColor="#1E3A8A" />
+
+        <!-- CONTACT CARD -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="6dp"
+            app:cardBackgroundColor="#E0F2FE">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:id="@+id/tvFavName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="No contact added"
+                    android:textStyle="bold"
+                    android:textSize="16sp"/>
+
+                <TextView
+                    android:id="@+id/tvFavNumber"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Tap to call"
+                    android:textColor="#1E3A8A"
+                    android:textSize="14sp"/>
+
+                <Button
+                    android:id="@+id/btnAddFav"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="➕ Add Contact"
+                    android:layout_marginTop="10dp"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- EMERGENCY BUTTONS -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Emergency Services"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:layout_marginTop="25dp"/>
+
+        <Button
+            android:id="@+id/btn1122"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:text="🚑 1122 Emergency"
+            android:layout_marginTop="10dp"/>
+
+        <Button
+            android:id="@+id/btnPolice"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:text="🚓 Police Help"
+            android:layout_marginTop="10dp"/>
+
+        <Button
+            android:id="@+id/btnFirstAid"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:text="🧑‍⚕️ First Aid"
+            android:layout_marginTop="10dp"/>
+
+        <Button
+            android:id="@+id/btnNearby"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:text="📍 Nearby Hospital"
+            android:layout_marginTop="10dp"/>
+
+    </LinearLayout>
+</ScrollView>
